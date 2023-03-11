@@ -1,19 +1,17 @@
 import { nanoid } from 'nanoid';
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { ContactsForm } from './ContactsForm/ContactsForm';
 import { ContactsList } from './ContactsList';
 import { Filter } from './Filter/Filter';
 
-const initialContacts = [];
+export function App() {
+  const [contacts, setContacts] = useState(() => {
+    return JSON.parse(window.localStorage.getItem('Contacts')) ?? [];
+  });
+  const [filter, setFilter] = useState('');
 
-export class App extends Component {
-  state = {
-    contacts: [],
-    filter: '',
-  };
-
-  onContactsFormSubmit = (name, number) => {
-    const existingContact = this.state.contacts.find(
+  const onContactsFormSubmit = (name, number) => {
+    const existingContact = contacts.find(
       contact => contact.name.toLowerCase() === name.toLowerCase()
     );
 
@@ -26,51 +24,32 @@ export class App extends Component {
       name: name,
       number: number,
     };
-    this.setState(prevState => ({
-      contacts: [newContact, ...prevState.contacts],
-    }));
+    setContacts([newContact, ...contacts]);
   };
 
-  onContactDelete = id => {
-    this.setState(prevState => ({
-      contacts: prevState.contacts.filter(contact => contact.id !== id),
-    }));
+  const onContactDelete = id => {
+    setContacts(contacts.filter(contact => contact.id !== id));
   };
 
-  onFilter = text => {
-    this.setState(() => ({
-      filter: text,
-    }));
+  const onFilter = text => {
+    setFilter(text);
   };
 
-  componentDidMount() {
-    const contacts = localStorage.getItem('Contacts');
-    if (contacts !== null) {
-      const parseContacts = JSON.parse(contacts);
-      this.setState({ contacts: parseContacts });
-      return;
-    }
-    this.setState({ contacts: initialContacts });
-  }
-  componentDidUpdate(prevState) {
-    if (this.state.contacts !== prevState.contacts) {
-      localStorage.setItem('Contacts', JSON.stringify(this.state.contacts));
-    }
-  }
+  useEffect(() => {
+    window.localStorage.setItem('Contacts', JSON.stringify(contacts));
+  }, [contacts]);
 
-  render() {
-    return (
-      <div>
-        <h1>Phonebook</h1>
-        <ContactsForm onSubmit={this.onContactsFormSubmit} />
-        <h2>Contacts</h2>
-        <Filter onFilter={this.onFilter} />
-        <ContactsList
-          contacts={this.state.contacts}
-          filter={this.state.filter}
-          onDelete={this.onContactDelete}
-        />
-      </div>
-    );
-  }
+  return (
+    <div>
+      <h1>Phonebook</h1>
+      <ContactsForm onSubmit={onContactsFormSubmit} />
+      <h2>Contacts</h2>
+      <Filter onFilter={onFilter} />
+      <ContactsList
+        contacts={contacts}
+        filter={filter}
+        onDelete={onContactDelete}
+      />
+    </div>
+  );
 }
